@@ -31,6 +31,7 @@ object LogisticRegressionDemo {
     val trainDF: DataFrame = result.head  // DataFrame = Dataset[Row]
     val testDF: DataFrame = result.tail.head
 
+
     println(s"Train set length ${trainDF.count()} records")
     println(s"Test set length ${testDF.count()} records")
 
@@ -94,6 +95,23 @@ object LogisticRegressionDemo {
     val roc = trainingSummary.roc
     roc.show()
     println(s"areaUnderROC: ${trainingSummary.areaUnderROC}")
+
+
+    // ONE HOT ENCODING DEMO
+    val df2 = spark.createDataFrame(Seq(
+      (0.0, 1.0),
+      (1.0, 0.0),
+      (2.0, 1.0),
+      (0.0, 2.0),
+      (0.0, 1.0),
+      (2.0, 0.0)
+    )).toDF("categoryIndex1", "categoryIndex2")
+    val encoder = new OneHotEncoder()
+      .setInputCols(Array("categoryIndex1", "categoryIndex2"))
+      .setOutputCols(Array("categoryVec1", "categoryVec2"))
+    val model2 = encoder.fit(df2)
+    val encoded = model2.transform(df2)
+    encoded.show()
 
     spark.stop()
   }
