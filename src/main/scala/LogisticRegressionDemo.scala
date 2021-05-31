@@ -16,7 +16,8 @@ object LogisticRegressionDemo {
     spark.sparkContext.setLogLevel("ERROR")
 
     // load dataset
-    val csvPath = "F:/Dev/data/synthetic_financial_fraud_detection_small_0.csv"
+    // val csvPath = getClass.getResource("/fraud.csv").getPath
+      val csvPath = "./fraud.csv"
     val df =  spark.read
       .option("header", true) // file contains header columns, we want to refer to them in the select statement
       .option("inferSchema", true) // when setting to true it automatically infers column types based on the data
@@ -41,8 +42,8 @@ object LogisticRegressionDemo {
     // we need to check the data type because any type of string is treated as categorical variable
     // df.dtypes: Returns all column names and their data types as an array.
     // https://spark.apache.org/docs/latest/api/scala/org/apache/spark/sql/Dataset.html
-    val catCols = trainDF.dtypes.filter( (value) =>  value._2 == "StringType")
-    val numCols = trainDF.dtypes.filter( (value) => value._1 != "isFraud" && value._2 == "DoubleType")
+    val catCols = trainDF.dtypes.filter( value =>  value._2 == "StringType")
+    val numCols = trainDF.dtypes.filter( value => value._1 != "isFraud" && value._2 == "DoubleType")
 
     // StringIndexer: Converts a single feature to an index feature. http://spark.apache.org/docs/latest/ml-features#stringindexer
     // OneHotEncoder: http://spark.apache.org/docs/latest/ml-features#onehotencoder
@@ -92,26 +93,16 @@ object LogisticRegressionDemo {
     val trainingSummary = logisticRegressionModel.binarySummary
 
     // Calculate Area Under the ROC Curve
+    // metric for classification problem
+    // 1 = good measure of seperability
+    // 0 = worst separability
+    // https://towardsdatascience.com/understanding-auc-roc-curve-68b2303cc9c5
+    // https://www.graphpad.com/guides/prism/8/curve-fitting/reg_logistic_roc_curves.htm
+    // choose cutoff with high sensitivy
     val roc = trainingSummary.roc
     roc.show()
+
     println(s"areaUnderROC: ${trainingSummary.areaUnderROC}")
-
-
-    // ONE HOT ENCODING DEMO
-    val df2 = spark.createDataFrame(Seq(
-      (0.0, 1.0),
-      (1.0, 0.0),
-      (2.0, 1.0),
-      (0.0, 2.0),
-      (0.0, 1.0),
-      (2.0, 0.0)
-    )).toDF("categoryIndex1", "categoryIndex2")
-    val encoder = new OneHotEncoder()
-      .setInputCols(Array("categoryIndex1", "categoryIndex2"))
-      .setOutputCols(Array("categoryVec1", "categoryVec2"))
-    val model2 = encoder.fit(df2)
-    val encoded = model2.transform(df2)
-    encoded.show()
 
     spark.stop()
   }
