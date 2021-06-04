@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/MLDemo.iml" filepath="$PROJECT_DIR$/.idea/modules/MLDemo.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/MLDemo-build.iml" filepath="$PROJECT_DIR$/.idea/modules/MLDemo-build.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SparkHadoopLogisticRegression.iml" filepath="$PROJECT_DIR$/.idea/modules/SparkHadoopLogisticRegression.iml" />
     </modules>
   </component>
 </project>
