@@ -9,7 +9,8 @@ object LogisticRegressionDemo {
   def main(args: Array[String]): Unit = {
     // create spark session
     val spark: SparkSession = SparkSession.builder
-      .master("local[*]")
+      // .master("local[*]")
+      .master("spark://spark-master:7077")
       .appName("LogisticRegressionExample")
       .getOrCreate()
 
@@ -17,7 +18,8 @@ object LogisticRegressionDemo {
 
     // load dataset
     // val csvPath = getClass.getResource("/fraud.csv").getPath
-      val csvPath = "./fraud.csv"
+    val csvPath  = "hdfs://namenode:9000/data/csv/fraudexample/fraud.csv"
+    // /user/root/input
     val df =  spark.read
       .option("header", true) // file contains header columns, we want to refer to them in the select statement
       .option("inferSchema", true) // when setting to true it automatically infers column types based on the data
@@ -25,7 +27,7 @@ object LogisticRegressionDemo {
       .select("type", "amount", "oldbalanceOrg", "newbalanceOrig", "isFraud")
 
     df.printSchema()
-    df.show(2)
+    // df.show(2)
 
     // split the dataset into test and training data
     val result = df.randomSplit(Array(0.7, 0.3), 7)
@@ -33,10 +35,10 @@ object LogisticRegressionDemo {
     val testDF: DataFrame = result.tail.head
 
 
-    println(s"Train set length ${trainDF.count()} records")
-    println(s"Test set length ${testDF.count()} records")
+    // println(s"Train set length ${trainDF.count()} records")
+    // println(s"Test set length ${testDF.count()} records")
 
-    trainDF.show(2)
+    // trainDF.show(2)
 
     // check the data type
     // we need to check the data type because any type of string is treated as categorical variable
@@ -50,10 +52,10 @@ object LogisticRegressionDemo {
     // For more info: http://spark.apache.org/docs/latest/ml-features
 
     // how many different types are there?
-    trainDF.select(countDistinct("type")).show()
+    // trainDF.select(countDistinct("type")).show()
 
     // group by types
-    trainDF.groupBy("type").count().show()
+    // trainDF.groupBy("type").count().show()
 
     // setting up string indexer
     val string_indexer = new StringIndexer()
@@ -79,15 +81,18 @@ object LogisticRegressionDemo {
     val pipelineModel = pipeline.fit(trainDF)
     val pp_df = pipelineModel.transform(testDF)
 
-    pp_df.select("type", "amount", "oldbalanceOrg", "newbalanceOrig", "VectorAssembler_features").show()
+    // pp_df.select("type", "amount", "oldbalanceOrg", "newbalanceOrig", "VectorAssembler_features").show()
 
     val mldata = pp_df.select(
       col("VectorAssembler_features").as("features"),
       col("isFraud").as("label"))
 
-    mldata.show(5, false)
+    // mldata.show(5, false)
 
-    val logisticRegressionModel = new LogisticRegression().fit(mldata)
+    println("Starting to train the model")
+    val logisticRegressionModel = new LogisticRegression()
+      .setTol(0.1) // Fix LBFGS Error
+      .fit(mldata)
     println(s"Coefficients: ${logisticRegressionModel.coefficients} Intercept: ${logisticRegressionModel.intercept}")
 
     val trainingSummary = logisticRegressionModel.binarySummary
